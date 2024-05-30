@@ -11,22 +11,24 @@ public class RSAKeyDistributionClient {
     private static final int SERVER_PORT = 12345;
 
     public static void main(String[] args) {
-        try (
-                // Connect to the server
-                Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+        try {
+            // Generate client's RSA key pair
+            KeyPair clientKeyPair = KeyGeneratorUtil.generateRSAKeyPair();
 
+            // Connect to the server
+            Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             System.out.println("Welcome to the Symmetric Key Distribution Client.");
 
-            // Receive public key from server
-            PublicKey serverPublicKey = (PublicKey) in.readObject();
+            // Send client's public key to the server
+            out.writeObject(clientKeyPair.getPublic());
 
             // Receive encrypted symmetric key from server
             byte[] encryptedSymmetricKey = (byte[]) in.readObject();
 
-            // Decrypt the symmetric key with RSA
-            byte[] symmetricKeyBytes = EncryptionUtil.decryptRSA(encryptedSymmetricKey, serverPublicKey);
+            // Decrypt the symmetric key with client's private key
+            byte[] symmetricKeyBytes = EncryptionUtil.decryptRSA(encryptedSymmetricKey, clientKeyPair.getPrivate());
             SecretKey symmetricKey = new SecretKeySpec(symmetricKeyBytes, "AES");
             System.out.println("Symmetric key received and successfully decrypted using RSA.");
 

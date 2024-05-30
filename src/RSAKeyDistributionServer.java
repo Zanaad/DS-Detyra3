@@ -37,14 +37,14 @@ public class RSAKeyDistributionServer {
 
                 System.out.println("Awaiting client requests for symmetric keys...");
 
-                // Send public key to client
-                out.writeObject(rsaKeyPair.getPublic());
+                // Receive public key from client
+                PublicKey clientPublicKey = (PublicKey) in.readObject();
 
                 // Generate a symmetric key (AES)
                 SecretKey symmetricKey = KeyGeneratorUtil.generateAESKey();
 
-                // Encrypt the symmetric key with RSA
-                byte[] encryptedSymmetricKey = EncryptionUtil.encryptRSA(symmetricKey.getEncoded(), rsaKeyPair.getPrivate());
+                // Encrypt the symmetric key with the client's public key
+                byte[] encryptedSymmetricKey = EncryptionUtil.encryptRSA(symmetricKey.getEncoded(), clientPublicKey);
 
                 // Send the encrypted symmetric key to the client
                 out.writeObject(encryptedSymmetricKey);
